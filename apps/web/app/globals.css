@@ -1,0 +1,578 @@
+@import "tailwindcss";
+
+:root {
+  --bg-deep: #0f0a07;
+  --bg-surface: #1a120b;
+  --bg-elevated: #2a1f16;
+  --bg-cream: #ede4d9;
+  --bg-sand: #d4c4b0;
+  --brown-100: #f5ebe0;
+  --brown-200: #d4c4b0;
+  --brown-300: #a8927c;
+  --brown-400: #8b6914;
+  --brown-500: #6b4423;
+  --brown-600: #4a3728;
+  --brown-700: #2c1810;
+  --accent-copper: #c8956c;
+  --accent-warm: #b8860b;
+  --success: #7cb342;
+  --success-neon: #00ff88;
+  --error: #c62828;
+  --foreground: #ede4d9;
+  --foreground-muted: #a8927c;
+
+  /* Typography scale — MONOLOG-inspired large type */
+  --text-display: clamp(3.5rem, 9vw, 9rem);
+  --text-headline: clamp(2.25rem, 5vw, 5rem);
+  --text-subhead: clamp(1.5rem, 3vw, 2.75rem);
+  --text-body-lg: clamp(1.125rem, 1.5vw, 1.375rem);
+  --text-label: clamp(0.6875rem, 1vw, 0.8125rem);
+
+  /* Brown glassmorphism */
+  --glass-brown-bg: rgba(26, 18, 11, 0.62);
+  --glass-brown-border: rgba(237, 228, 217, 0.18);
+  --glass-brown-highlight: rgba(245, 235, 224, 0.1);
+
+  /* Light terminal / bento */
+  --terminal-page-bg: #f0e6d8;
+  --bento-card-bg: #faf6f1;
+  --bento-card-border: rgba(107, 68, 35, 0.14);
+  --bento-text: #2c1810;
+  --bento-text-muted: #5c4033;
+  --bento-accent: #8b5a2b;
+  --bento-surface: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--bg-deep);
+  --color-foreground: var(--foreground);
+  --color-cream: var(--bg-cream);
+  --color-sand: var(--bg-sand);
+  --color-brown-100: var(--brown-100);
+  --color-brown-200: var(--brown-200);
+  --color-brown-300: var(--brown-300);
+  --color-brown-400: var(--brown-400);
+  --color-brown-500: var(--brown-500);
+  --color-brown-600: var(--brown-600);
+  --color-brown-700: var(--brown-700);
+  --color-copper: var(--accent-copper);
+  --color-success: var(--success);
+  --color-success-neon: var(--success-neon);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-display: var(--font-instrument-serif);
+  --font-headline: var(--font-syne);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--foreground);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent-copper);
+  color: var(--bg-deep);
+}
+
+/* ─── Brown cylindrical glass navbar ─── */
+.glass-nav {
+  background: var(--glass-brown-bg);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  border: 1px solid var(--glass-brown-border);
+  border-radius: 9999px;
+  box-shadow:
+    0 8px 32px rgba(15, 10, 7, 0.35),
+    0 2px 8px rgba(15, 10, 7, 0.2),
+    inset 0 1px 0 var(--glass-brown-highlight),
+    inset 0 -1px 0 rgba(15, 10, 7, 0.15);
+}
+
+.glass-nav-menu {
+  border-radius: 1.5rem;
+}
+
+.glass-nav-link:hover {
+  background: rgba(107, 68, 35, 0.35);
+}
+
+/* Light terminal glass nav (readable on cream bg) */
+.glass-nav-terminal {
+  background: rgba(250, 246, 241, 0.82);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(107, 68, 35, 0.2);
+  border-radius: 9999px;
+  box-shadow:
+    0 8px 32px rgba(44, 24, 16, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ─── Bento grid terminal layout ─── */
+.terminal-bento-page {
+  min-height: 100vh;
+  background: var(--terminal-page-bg);
+  color: var(--bento-text);
+  padding: 5rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .terminal-bento-page {
+    padding: 5.25rem 1.25rem 1rem;
+  }
+}
+
+.bento-nav-wrap {
+  position: fixed;
+  top: 1rem;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.bento-nav-wrap nav {
+  pointer-events: auto;
+}
+
+/* Underwrite workbench — workflow columns, minimal scroll during analysis */
+.underwrite-shell {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.underwrite-flow-hint {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(107, 68, 35, 0.12);
+  border-radius: 0.75rem;
+}
+
+.underwrite-error {
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Main tri-column: Input | Log | Verdict */
+.underwrite-main {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "input"
+    "parcel"
+    "stream"
+    "verdict";
+  min-height: 0;
+}
+
+@media (min-width: 1024px) {
+  .underwrite-main {
+    flex: 1;
+    grid-template-columns: minmax(260px, 22%) minmax(0, 1fr) minmax(280px, 28%);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "input stream verdict";
+    min-height: calc(100vh - 11.5rem);
+    max-height: calc(100vh - 11.5rem);
+  }
+
+  .underwrite-col-input {
+    grid-area: input;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .underwrite-col-stream {
+    grid-area: stream;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .underwrite-col-verdict {
+    grid-area: verdict;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .underwrite-parcel-card {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .underwrite-parcel-card .bento-card-body {
+    overflow-y: auto;
+  }
+}
+
+.underwrite-col-input { grid-area: input; }
+.underwrite-col-stream { grid-area: stream; }
+.underwrite-col-verdict { grid-area: verdict; }
+.underwrite-parcel-mobile { grid-area: parcel; }
+
+@media (min-width: 1024px) {
+  .underwrite-parcel-mobile {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .underwrite-parcel-desktop {
+    display: none;
+  }
+
+  .underwrite-col-stream {
+    min-height: min(52vh, 420px);
+  }
+}
+
+/* Bottom reference strip: Map + 3D */
+.underwrite-viz {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .underwrite-viz {
+    grid-template-columns: 1fr 1fr;
+    height: min(220px, 26vh);
+    min-height: 180px;
+  }
+
+  .underwrite-viz .bento-card {
+    height: 100%;
+  }
+
+  .underwrite-viz .bento-card-body {
+    min-height: 0;
+  }
+}
+
+.underwrite-viz-label {
+  display: none;
+}
+
+/* Lot map — explicit height required for Leaflet */
+.lot-map-shell {
+  position: relative;
+  width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(107, 68, 35, 0.15);
+  background: #e8e0d4;
+}
+
+.lot-map-shell .lot-map-container,
+.lot-map-shell .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  min-height: inherit;
+  background: #e8e0d4 !important;
+  z-index: 0;
+}
+
+.lot-map-empty-static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b4423;
+}
+
+.lot-map-placeholder {
+  background: #f5ebe0;
+}
+
+.underwrite-viz .underwrite-viz-map .bento-card-body {
+  padding-bottom: 0.75rem;
+  min-height: 220px;
+}
+
+.underwrite-page {
+  padding-bottom: 4rem;
+}
+
+.sticky-decision-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: 0 1rem 0.75rem;
+  pointer-events: none;
+}
+
+.sticky-decision-inner {
+  pointer-events: auto;
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 1rem;
+  background: rgba(250, 246, 241, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(107, 68, 35, 0.2);
+  border-radius: 9999px;
+  box-shadow: 0 -4px 24px rgba(44, 24, 16, 0.08);
+}
+
+@media (min-width: 1024px) {
+  .underwrite-main {
+    min-height: calc(100vh - 12rem);
+    max-height: calc(100vh - 12rem);
+  }
+}
+
+/* Legacy bento grid (unused on underwrite — kept for compatibility) */
+.bento-grid {
+  display: grid;
+  gap: 0.875rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+}
+
+.bento-card {
+  background: var(--bento-card-bg);
+  border: 1px solid var(--bento-card-border);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px rgba(44, 24, 16, 0.06);
+}
+
+.bento-card-accent {
+  background: linear-gradient(145deg, #faf6f1 0%, #f5ebe0 100%);
+}
+
+.bento-card-header {
+  padding: 1rem 1.25rem 0;
+}
+
+.bento-card-subtitle {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bento-accent);
+  margin-bottom: 0.25rem;
+}
+
+.bento-card-title {
+  font-family: var(--font-syne), sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bento-text);
+}
+
+.bento-card-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.terminal-scroll-light::-webkit-scrollbar {
+  width: 5px;
+}
+.terminal-scroll-light::-webkit-scrollbar-track {
+  background: #ede4d9;
+}
+.terminal-scroll-light::-webkit-scrollbar-thumb {
+  background: #a8927c;
+  border-radius: 4px;
+}
+
+/* Typography utilities */
+.type-display {
+  font-family: var(--font-syne), var(--font-space-grotesk), sans-serif;
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.type-headline {
+  font-family: var(--font-syne), var(--font-space-grotesk), sans-serif;
+  font-size: var(--text-headline);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+.type-subhead {
+  font-family: var(--font-syne), sans-serif;
+  font-size: var(--text-subhead);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.type-serif-italic {
+  font-family: var(--font-instrument-serif), serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.type-label {
+  font-family: var(--font-ibm-plex-mono), monospace;
+  font-size: var(--text-label);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.type-body-lg {
+  font-size: var(--text-body-lg);
+  line-height: 1.65;
+  font-weight: 300;
+}
+
+/* Terminal scrollbar */
+.terminal-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.terminal-scroll::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: var(--brown-500);
+}
+
+@keyframes focusPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.focus-pulse {
+  animation: focusPulse 2s ease-in-out infinite;
+}
+
+@keyframes borderFlashGreen {
+  0%, 100% { border-color: var(--brown-500); }
+  50% { border-color: var(--success-neon); }
+}
+
+@keyframes borderFlashRed {
+  0%, 100% { border-color: var(--brown-500); }
+  50% { border-color: var(--error); }
+}
+
+.flash-success {
+  animation: borderFlashGreen 0.6s ease 3;
+}
+
+.flash-error {
+  animation: borderFlashRed 0.6s ease 3;
+}
+
+.flash-success-bento {
+  animation: borderFlashGreenBento 0.6s ease 3;
+}
+
+.flash-error-bento {
+  animation: borderFlashRedBento 0.6s ease 3;
+}
+
+@keyframes borderFlashGreenBento {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.45); }
+}
+
+@keyframes borderFlashRedBento {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.45); }
+}
+
+.violation-line-light {
+  animation: violationPulseLight 1.5s ease infinite;
+}
+
+@keyframes violationPulseLight {
+  0%, 100% { background-color: rgba(254, 226, 226, 0.8); }
+  50% { background-color: rgba(254, 202, 202, 1); }
+}
+
+@keyframes violationPulse {
+  0%, 100% { background-color: rgba(198, 40, 40, 0.1); border-color: var(--error); }
+  50% { background-color: rgba(198, 40, 40, 0.25); border-color: #ff5252; }
+}
+
+.violation-line {
+  animation: violationPulse 1.5s ease infinite;
+}
+
+.progress-animate {
+  animation: progressFill 0.8s ease forwards;
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+
+/* Link hover */
+.link-hover {
+  position: relative;
+}
+.link-hover::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--accent-copper);
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.link-hover:hover::after {
+  width: 100%;
+}
+
+/* Leaflet — light theme on underwrite page */
+.underwrite-page .leaflet-container {
+  background: #e8e0d4 !important;
+  font-family: var(--font-ibm-plex-mono), monospace !important;
+}
+
+.underwrite-page .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #6b4423 !important;
+  font-size: 8px !important;
+}
