@@ -10,6 +10,7 @@ load_dotenv()
 
 from agents.zoning_compliance import run_zoning_compliance
 from agents.spatial_calculator import run_spatial_calculator
+from tools.shapely_engine import compute_site_geometry
 
 app = FastAPI(title="Zone-Draft Geo Agent", version="1.0.0")
 
@@ -31,6 +32,12 @@ class RoomRequest(BaseModel):
 class RoomUpdate(BaseModel):
     key: str
     value: dict
+
+
+class SiteGeometryRequest(BaseModel):
+    lot_data: dict
+    zoning_analysis: dict | None = None
+    scenario: str = "both"
 
 
 @app.get("/health")
@@ -72,6 +79,19 @@ def run_spatial_agent(req: RoomRequest):
     schema["building_envelope"] = envelope
     room_store[req.room_id] = schema
     return {"log": log, "building_envelope": envelope}
+
+
+@app.post("/compute-site-geometry")
+def compute_site_geometry_endpoint(req: SiteGeometryRequest):
+    try:
+        result = compute_site_geometry(
+            req.lot_data,
+            req.zoning_analysis,
+            req.scenario,
+        )
+        return result
+    except Exception as exc:
+        return {"error": str(exc)}
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
+import type { SiteViewerGeoJSON } from '@/types/zone-draft';
 
 export function generateReport(ctx: ZoneDraftRoomSchema): string {
   const lot = ctx.lot_data!;
@@ -67,9 +68,31 @@ export function generateCSV(fin: NonNullable<ZoneDraftRoomSchema['financial_anal
   return rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
 }
 
-export function generateGeometryJson(ctx: ZoneDraftRoomSchema): string {
+export function generateGeometryJson(
+  ctx: ZoneDraftRoomSchema,
+  siteGeoJson?: SiteViewerGeoJSON | null
+): string {
   const lot = ctx.lot_data!;
   const envelope = ctx.building_envelope!;
+
+  if (siteGeoJson?.features?.length) {
+    return JSON.stringify(
+      {
+        type: 'FeatureCollection',
+        properties: {
+          bbl: lot.bbl,
+          address: lot.address,
+          zonedist: lot.zonedist1,
+          gross_floor_area: envelope.gross_floor_area,
+          source: 'site-viewer-georeferenced',
+        },
+        features: siteGeoJson.features,
+      },
+      null,
+      2
+    );
+  }
+
   return JSON.stringify(
     {
       type: 'Feature',

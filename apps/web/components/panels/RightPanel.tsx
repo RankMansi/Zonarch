@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import type { SessionStatus } from '@/types/zone-draft';
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
 import DealVerdictHero from '@/components/ui/DealVerdictHero';
@@ -108,6 +109,15 @@ export default function RightPanel({
         )}
 
         <ExportPreview sessionId={sessionId} ready={status === 'complete'} />
+
+        {status === 'complete' && lotData && envelopeData && sessionId && (
+          <Link
+            href={`/site-viewer/${sessionId}`}
+            className="block w-full text-center text-sm font-semibold text-[#6b4423] hover:text-[#2c1810] border border-[#8b5a2b]/50 rounded-xl px-4 py-3 bg-white/80 transition-colors"
+          >
+            View site in 3D →
+          </Link>
+        )}
       </div>
     );
   }

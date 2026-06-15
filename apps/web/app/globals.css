@@ -576,3 +576,23 @@ body {
   color: #6b4423 !important;
   font-size: 8px !important;
 }
+
+/* Site Viewer — full-screen georeferenced map */
+.site-viewer-shell {
+  --sv-brown: #6b4423;
+  --sv-tan: #e8e0d4;
+}
+
+@media (max-width: 767px) {
+  .site-viewer-shell .site-viewer-layers {
+    order: 2;
+    max-height: 38vh;
+    border-left: none;
+    border-top: 1px solid rgba(212, 196, 176, 0.7);
+  }
+
+  .site-viewer-shell .site-viewer-map {
+    order: 1;
+    min-height: 50vh;
+  }
+}

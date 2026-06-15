@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { bandRoom } from '@/lib/band-client';
+import { buildSiteGeometry } from '@/lib/site-geometry';
 import { generateReport, generateCSV, generateGeometryJson } from '@/lib/exporters/report-generator';
 import { getSession } from '@/lib/session-store';
 
@@ -21,8 +22,19 @@ export async function GET(
 
     const zip = new JSZip();
     zip.file('blueprint_report.md', generateReport(context));
+
+    let siteGeo = context.site_geometry_geojson ?? null;
+    if (!siteGeo && context.lot_data && context.zoning_analysis) {
+      try {
+        const built = await buildSiteGeometry(context.lot_data, context.zoning_analysis, 'both');
+        siteGeo = built.layers;
+      } catch {
+        /* legacy export fallback */
+      }
+    }
+
     zip.file('financial_underwriting.csv', generateCSV(context.financial_analysis));
-    zip.file('site_geometry.json', generateGeometryJson(context));
+    zip.file('site_geometry.json', generateGeometryJson(context, siteGeo));
 
     const blob = await zip.generateAsync({ type: 'nodebuffer' });
     return new Response(new Uint8Array(blob), {

@@ -1,3 +1,5 @@
+import type { SiteViewerGeoJSON } from './site-viewer';
+
 export interface ZoneDraftRoomSchema {
   lot_data: {
     bbl: string;
@@ -84,6 +86,9 @@ export interface ZoneDraftRoomSchema {
     assessed_land_estimate?: number;
     assessed_land_multiplier?: number;
   } | null;
+
+  /** Georeferenced Site Viewer layers (optional cache after spatial agent) */
+  site_geometry_geojson?: SiteViewerGeoJSON | null;
 
   status: 'PENDING' | 'RUNNING' | 'APPROVED' | 'FAILED';
   iteration_count: number;
