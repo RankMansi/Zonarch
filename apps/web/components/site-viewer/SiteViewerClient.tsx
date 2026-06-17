@@ -85,14 +85,14 @@ export default function SiteViewerClient({ sessionId }: SiteViewerClientProps) {
         <p className="text-sm text-[#6b4423] mb-4 max-w-md">{error.message}</p>
         {error.status === 422 ? (
           <Link
-            href="/underwrite"
+            href={`/underwrite?session=${sessionId}`}
             className="text-sm font-semibold text-white bg-[#6b4423] px-4 py-2 rounded-lg"
           >
-            Run underwriting first →
+            Back to underwriting →
           </Link>
         ) : (
-          <Link href="/underwrite" className="text-sm text-[#6b4423] underline">
-            ← Back to underwrite
+          <Link href={`/underwrite?session=${sessionId}`} className="text-sm text-[#6b4423] underline">
+            ← Back to analysis
           </Link>
         )}
       </div>
@@ -107,6 +107,7 @@ export default function SiteViewerClient({ sessionId }: SiteViewerClientProps) {
         address={payload.address}
         bbl={payload.bbl}
         zonedist1={payload.zonedist1}
+        sessionId={sessionId}
       />
 
       {payload.meta.data_warnings.length > 0 && (

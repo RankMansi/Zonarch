@@ -115,25 +115,25 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
           <Layer
             id="existing-buildings"
             type="fill-extrusion"
-            filter={['in', ['get', 'layer'], ['literal', ['existing_building', 'subject_building']]]}
+            filter={layerFilter('existing_building')}
             layout={{ visibility: vis(visibility.existing_buildings) }}
             paint={{
-              'fill-extrusion-color': [
-                'match',
-                ['get', 'layer'],
-                'subject_building',
-                '#5c4033',
-                '#b8a898',
-              ],
+              'fill-extrusion-color': '#b8a898',
               'fill-extrusion-height': FT_TO_M,
               'fill-extrusion-base': BASE_FT_TO_M,
-              'fill-extrusion-opacity': [
-                'match',
-                ['get', 'layer'],
-                'subject_building',
-                0.9,
-                0.85,
-              ],
+              'fill-extrusion-opacity': 0.85,
+            }}
+          />
+          <Layer
+            id="subject-building"
+            type="fill-extrusion"
+            filter={layerFilter('subject_building')}
+            layout={{ visibility: vis(visibility.existing_buildings) }}
+            paint={{
+              'fill-extrusion-color': '#5c4033',
+              'fill-extrusion-height': FT_TO_M,
+              'fill-extrusion-base': BASE_FT_TO_M,
+              'fill-extrusion-opacity': 0.9,
             }}
           />
 
