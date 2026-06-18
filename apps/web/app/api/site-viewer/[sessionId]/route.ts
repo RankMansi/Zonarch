@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession, getRoomSchema } from '@/lib/session-store';
 import { buildSiteGeometry } from '@/lib/site-geometry';
-import { fetchNearbyBuildings } from '@/lib/tools/nyc-buildings-api';
+import { resolveTaxLotPolygon } from '@/lib/tools/nyc-tax-lot-api';
 import type { SiteViewerPayload } from '@/types/zone-draft';
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
@@ -19,6 +19,12 @@ function computeBbox(
     Math.max(...lngs) + paddingDeg,
     Math.max(...lats) + paddingDeg,
   ];
+}
+
+function centroidFromRing(ring: Array<[number, number]>): { lat: number; lng: number } {
+  const lat = ring.reduce((s, c) => s + c[0], 0) / ring.length;
+  const lng = ring.reduce((s, c) => s + c[1], 0) / ring.length;
+  return { lat, lng };
 }
 
 export async function GET(
@@ -49,57 +55,52 @@ export async function GET(
   const envelope = schema.building_envelope;
   const financial = schema.financial_analysis;
 
-  const geometry =
-    schema.site_geometry_geojson && schema.site_geometry_geojson.features?.length
-      ? {
-          layers: schema.site_geometry_geojson,
-          metrics: {
-            height_ft: envelope.total_height_ft ?? envelope.floors_with_uap * 10.5,
-            floors: envelope.floors_with_uap,
-            gfa_sqft: envelope.gross_floor_area,
-            base_far: zoning.base_far,
-            uap_far: zoning.uap_far,
-            sky_exposure_base_ft: zoning.sky_exposure_base_ft,
-          },
-          meta: {
-            envelope_method: 'polygon' as const,
-            data_warnings: [] as string[],
-          },
-        }
-      : await buildSiteGeometry(lot, zoning, 'both');
-
-  const buildings = await fetchNearbyBuildings(
-    lot.latitude,
-    lot.longitude,
+  const lotPolygon = await resolveTaxLotPolygon(
     lot.bbl,
-    lot.lot_polygon_coords
+    lot.lot_polygon_coords,
+    {
+      lat: lot.latitude,
+      lng: lot.longitude,
+      frontage: lot.lot_frontage,
+      depth: lot.lot_depth,
+    }
   );
 
-  const allWarnings = [
-    ...geometry.meta.data_warnings,
-    ...buildings.warnings,
-  ];
-
-  const layers = {
-    type: 'FeatureCollection' as const,
-    features: [...geometry.layers.features, ...buildings.features],
+  const lotForGeometry = {
+    ...lot,
+    lot_polygon_coords:
+      lotPolygon.coords.length >= 3 ? lotPolygon.coords : lot.lot_polygon_coords,
   };
 
+  const geometry = await buildSiteGeometry(lotForGeometry, zoning, 'both');
+
+  const allWarnings = [...lotPolygon.warnings, ...geometry.meta.data_warnings];
+  const uniqueWarnings = [...new Set(allWarnings)];
+  const envelopeMethodFromLot =
+    lotPolygon.source === 'rectangle_fallback' || geometry.meta.envelope_method === 'rectangle_fallback'
+      ? 'rectangle_fallback'
+      : 'polygon';
+
   const ring =
-    lot.lot_polygon_coords ??
-    ([
-      [lot.latitude - 0.0002, lot.longitude - 0.0002],
-      [lot.latitude - 0.0002, lot.longitude + 0.0002],
-      [lot.latitude + 0.0002, lot.longitude + 0.0002],
-      [lot.latitude + 0.0002, lot.longitude - 0.0002],
-    ] as Array<[number, number]>);
+    lotPolygon.coords.length >= 3
+      ? lotPolygon.coords
+      : lot.lot_polygon_coords ??
+        ([
+          [lot.latitude - 0.0002, lot.longitude - 0.0002],
+          [lot.latitude - 0.0002, lot.longitude + 0.0002],
+          [lot.latitude + 0.0002, lot.longitude + 0.0002],
+          [lot.latitude + 0.0002, lot.longitude - 0.0002],
+        ] as Array<[number, number]>);
+
+  const center =
+    ring.length >= 3 ? centroidFromRing(ring) : { lat: lot.latitude, lng: lot.longitude };
 
   const payload: SiteViewerPayload = {
     sessionId,
     address: lot.address,
     bbl: lot.bbl,
     zonedist1: lot.zonedist1,
-    center: { lat: lot.latitude, lng: lot.longitude },
+    center,
     bbox: computeBbox(ring),
     camera: { zoom: 17, pitch: 60, bearing: -20 },
     metrics: {
@@ -111,14 +112,12 @@ export async function GET(
       uap_far: zoning.uap_far,
       sky_exposure_base_ft: zoning.sky_exposure_base_ft,
     },
-    layers,
+    layers: geometry.layers,
     meta: {
-      existing_building_count: buildings.features.filter(
-        (f) => f.properties.layer === 'existing_building'
-      ).length,
-      envelope_method: geometry.meta.envelope_method,
-      data_warnings: allWarnings,
-      use_osm_buildings_fallback: buildings.useOsmFallback,
+      envelope_method: envelopeMethodFromLot,
+      lot_polygon_source: lotPolygon.source,
+      data_warnings: uniqueWarnings,
+      map_engine: 'openfreemap_maplibre',
     },
   };
 

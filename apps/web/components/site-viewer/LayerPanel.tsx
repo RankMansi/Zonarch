@@ -1,14 +1,14 @@
 'use client';
 
 export type LayerToggleKey =
-  | 'existing_buildings'
+  | 'city_buildings'
   | 'lot_boundary'
   | 'envelope_uap'
   | 'envelope_base'
   | 'sky_exposure_plane';
 
 export interface LayerVisibility {
-  existing_buildings: boolean;
+  city_buildings: boolean;
   lot_boundary: boolean;
   envelope_uap: boolean;
   envelope_base: boolean;
@@ -16,7 +16,7 @@ export interface LayerVisibility {
 }
 
 export const DEFAULT_LAYER_VISIBILITY: LayerVisibility = {
-  existing_buildings: true,
+  city_buildings: true,
   lot_boundary: true,
   envelope_uap: true,
   envelope_base: false,
@@ -28,8 +28,8 @@ const LAYER_ITEMS: Array<{
   label: string;
   hint?: string;
 }> = [
-  { key: 'existing_buildings', label: 'Existing buildings', hint: 'Grey neighbor context' },
-  { key: 'lot_boundary', label: 'Lot boundary', hint: 'MapPLUTO tax lot' },
+  { key: 'city_buildings', label: 'City buildings', hint: 'OpenFreeMap OSM 3D context' },
+  { key: 'lot_boundary', label: 'Lot boundary', hint: 'NYC Zoning API tax lot' },
   { key: 'envelope_uap', label: 'Proposed envelope', hint: 'UAP FAR volume (green)' },
   { key: 'envelope_base', label: 'Base FAR vs UAP', hint: 'Brown = base FAR only' },
   { key: 'sky_exposure_plane', label: 'Sky exposure plane', hint: 'Reference height slab' },
@@ -37,8 +37,7 @@ const LAYER_ITEMS: Array<{
 
 const LEGEND = [
   { color: '#6b4423', label: 'Your tax lot' },
-  { color: '#5c4033', label: 'Existing on lot' },
-  { color: '#b8a898', label: 'Neighbor buildings' },
+  { color: '#c8bcb0', label: 'City buildings (OSM)' },
   { color: '#2e7d32', label: 'UAP envelope' },
   { color: '#8b5a2b', label: 'Base FAR envelope' },
   { color: '#c8956c', label: 'Sky exposure plane' },
@@ -83,7 +82,7 @@ export default function LayerPanel({ visibility, onChange }: LayerPanelProps) {
 
         <div className="border-t border-[#d4c4b0]/50 pt-3">
           <p className="type-label text-[10px] text-[#8b5a2b] uppercase tracking-wider mb-2">
-            Legend ?
+            Legend
           </p>
           <ul className="space-y-1.5">
             {LEGEND.map((item) => (

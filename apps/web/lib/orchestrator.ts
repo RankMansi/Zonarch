@@ -5,6 +5,32 @@ import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
 
 const GEO_AGENT_URL = process.env.GEO_AGENT_URL || 'http://localhost:8000';
 
+async function syncGeoAgentRoom(roomId: string): Promise<boolean> {
+  try {
+    const schema = await bandRoom.context.getAll(roomId);
+    const res = await fetch(`${GEO_AGENT_URL}/sync-room`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room_id: roomId, schema }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function geoAgentAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${GEO_AGENT_URL}/health`, {
+      signal: AbortSignal.timeout(2_000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 const BASE_FAR: Record<string, { res: number; uap: number | null; max_height: number | null; sky_exp_base: number; comm?: number }> = {
   'R1-1': { res: 0.5, uap: null, max_height: 35, sky_exp_base: 25 },
   'R3-2': { res: 0.5, uap: null, max_height: 35, sky_exp_base: 25 },
@@ -121,18 +147,25 @@ async function runZoningAgent(roomId: string): Promise<string> {
   const lotData = await bandRoom.context.get(roomId, 'lot_data');
   if (!lotData) throw new Error('Zoning agent: no lot_data');
 
-  try {
-    const res = await fetch(`${GEO_AGENT_URL}/run-zoning-agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room_id: roomId }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.log || 'Zoning analysis complete via Python agent';
+  if (await geoAgentAvailable()) {
+    try {
+      await syncGeoAgentRoom(roomId);
+      const res = await fetch(`${GEO_AGENT_URL}/run-zoning-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room_id: roomId }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.error && data.zoning_analysis) {
+          await bandRoom.context.set(roomId, 'zoning_analysis', data.zoning_analysis);
+          return data.log || 'Zoning analysis complete via Python agent';
+        }
+      }
+    } catch {
+      /* fall through to local */
     }
-  } catch {
-    /* fall through to local */
   }
 
   const { rules: zoning, key: tableKey, approximated } = lookupZoning(lotData.zonedist1);
@@ -168,18 +201,25 @@ async function runSpatialAgent(roomId: string): Promise<string> {
   const zoning = await bandRoom.context.get(roomId, 'zoning_analysis');
   if (!lotData || !zoning) throw new Error('Spatial agent: missing context');
 
-  try {
-    const res = await fetch(`${GEO_AGENT_URL}/run-spatial-agent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room_id: roomId }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.log || 'Envelope computed via Python agent';
+  if (await geoAgentAvailable()) {
+    try {
+      await syncGeoAgentRoom(roomId);
+      const res = await fetch(`${GEO_AGENT_URL}/run-spatial-agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room_id: roomId }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.error && data.building_envelope) {
+          await bandRoom.context.set(roomId, 'building_envelope', data.building_envelope);
+          return data.log || 'Envelope computed via Python agent';
+        }
+      }
+    } catch {
+      /* fall through */
     }
-  } catch {
-    /* fall through */
   }
 
   let envelope = computeEnvelope(

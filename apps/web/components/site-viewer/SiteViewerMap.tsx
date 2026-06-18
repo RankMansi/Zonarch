@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import Map, { Layer, NavigationControl, Source } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { SiteViewerGeoJSON, SiteViewerPayload } from '@/types/zone-draft';
 import type { LayerVisibility } from './LayerPanel';
 import type { FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-const CARTO_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
-const OSM_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+const OPENFREEMAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+const CITY_BUILDINGS_SOURCE = 'openfreemap';
+const CITY_BUILDINGS_LAYER = 'city-3d-buildings';
 
 const FT_TO_M: ['*', ['coalesce', ['get', 'height_ft'], number], number] = [
   '*',
@@ -23,8 +25,64 @@ const BASE_FT_TO_M: ['*', ['coalesce', ['get', 'extrusion_base_ft'], number], nu
   0.3048,
 ];
 
+const OVERLAY_LAYERS = new Set([
+  'lot_boundary',
+  'buildable_footprint',
+  'envelope_uap',
+  'envelope_base',
+  'sky_exposure_plane',
+]);
+
 function layerFilter(layerId: string): FilterSpecification {
   return ['==', ['get', 'layer'], layerId];
+}
+
+function findFirstSymbolLayerId(map: MapLibreMap): string | undefined {
+  const layers = map.getStyle()?.layers;
+  if (!layers) return undefined;
+  for (const layer of layers) {
+    if (layer.type === 'symbol') return layer.id;
+  }
+  return undefined;
+}
+
+function setupCityBuildingsLayer(map: MapLibreMap): void {
+  if (map.getLayer(CITY_BUILDINGS_LAYER)) return;
+
+  if (!map.getSource(CITY_BUILDINGS_SOURCE)) {
+    map.addSource(CITY_BUILDINGS_SOURCE, {
+      type: 'vector',
+      url: 'https://tiles.openfreemap.org/planet',
+    });
+  }
+
+  const beforeId = findFirstSymbolLayerId(map);
+
+  map.addLayer(
+    {
+      id: CITY_BUILDINGS_LAYER,
+      source: CITY_BUILDINGS_SOURCE,
+      'source-layer': 'building',
+      type: 'fill-extrusion',
+      minzoom: 15,
+      filter: ['!=', ['get', 'hide_3d'], true],
+      paint: {
+        'fill-extrusion-color': '#c8bcb0',
+        'fill-extrusion-height': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          15,
+          0,
+          16,
+          ['coalesce', ['get', 'render_height'], ['get', 'height'], 12],
+        ],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-opacity': 0.85,
+      },
+    },
+    beforeId
+  );
 }
 
 interface SiteViewerMapProps {
@@ -35,13 +93,15 @@ interface SiteViewerMapProps {
 export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProps) {
   const mapRef = useRef<MapRef>(null);
   const flewRef = useRef(false);
+  const cityLayerReadyRef = useRef(false);
 
-  const mapStyle = payload.meta.use_osm_buildings_fallback ? OSM_STYLE : CARTO_STYLE;
-
-  const geojson = useMemo(
-    () => payload.layers as SiteViewerGeoJSON,
-    [payload.layers]
-  );
+  const geojson = useMemo(() => {
+    const all = payload.layers as SiteViewerGeoJSON;
+    return {
+      type: 'FeatureCollection' as const,
+      features: all.features.filter((f) => OVERLAY_LAYERS.has(f.properties.layer)),
+    };
+  }, [payload.layers]);
 
   const flyToLot = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -55,13 +115,41 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
     });
   }, [payload]);
 
-  useEffect(() => {
-    if (flewRef.current) return;
+  const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
-    if (!map?.isStyleLoaded()) return;
-    flewRef.current = true;
-    flyToLot();
-  }, [flyToLot]);
+    if (!map) return;
+
+    const init = () => {
+      try {
+        setupCityBuildingsLayer(map);
+        cityLayerReadyRef.current = true;
+        map.setLayoutProperty(
+          CITY_BUILDINGS_LAYER,
+          'visibility',
+          visibility.city_buildings ? 'visible' : 'none'
+        );
+      } catch (err) {
+        console.warn('[site-viewer] city buildings layer:', err);
+      }
+      if (!flewRef.current) {
+        flewRef.current = true;
+        flyToLot();
+      }
+    };
+
+    if (map.isStyleLoaded()) init();
+    else map.once('styledata', init);
+  }, [flyToLot, visibility.city_buildings]);
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !cityLayerReadyRef.current || !map.getLayer(CITY_BUILDINGS_LAYER)) return;
+    map.setLayoutProperty(
+      CITY_BUILDINGS_LAYER,
+      'visibility',
+      visibility.city_buildings ? 'visible' : 'none'
+    );
+  }, [visibility.city_buildings]);
 
   const vis = (on: boolean): 'visible' | 'none' => (on ? 'visible' : 'none');
 
@@ -69,7 +157,7 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
     <div className="site-viewer-map relative flex-1 min-h-0 min-w-0">
       <Map
         ref={mapRef}
-        mapStyle={mapStyle}
+        mapStyle={OPENFREEMAP_STYLE}
         initialViewState={{
           longitude: payload.center.lng,
           latitude: payload.center.lat,
@@ -79,12 +167,11 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
         }}
         maxPitch={85}
         style={{ width: '100%', height: '100%' }}
-        onLoad={flyToLot}
+        onLoad={handleMapLoad}
       >
         <NavigationControl position="top-left" visualizePitch />
 
         <Source id="site-viewer-geo" type="geojson" data={geojson}>
-          {/* Lot boundary */}
           <Layer
             id="lot-fill"
             type="fill"
@@ -111,33 +198,6 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
             }}
           />
 
-          {/* Existing + subject buildings */}
-          <Layer
-            id="existing-buildings"
-            type="fill-extrusion"
-            filter={layerFilter('existing_building')}
-            layout={{ visibility: vis(visibility.existing_buildings) }}
-            paint={{
-              'fill-extrusion-color': '#b8a898',
-              'fill-extrusion-height': FT_TO_M,
-              'fill-extrusion-base': BASE_FT_TO_M,
-              'fill-extrusion-opacity': 0.85,
-            }}
-          />
-          <Layer
-            id="subject-building"
-            type="fill-extrusion"
-            filter={layerFilter('subject_building')}
-            layout={{ visibility: vis(visibility.existing_buildings) }}
-            paint={{
-              'fill-extrusion-color': '#5c4033',
-              'fill-extrusion-height': FT_TO_M,
-              'fill-extrusion-base': BASE_FT_TO_M,
-              'fill-extrusion-opacity': 0.9,
-            }}
-          />
-
-          {/* UAP envelope */}
           <Layer
             id="envelope-uap"
             type="fill-extrusion"
@@ -151,7 +211,6 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
             }}
           />
 
-          {/* Base FAR envelope */}
           <Layer
             id="envelope-base"
             type="fill-extrusion"
@@ -165,7 +224,6 @@ export default function SiteViewerMap({ payload, visibility }: SiteViewerMapProp
             }}
           />
 
-          {/* Sky exposure plane */}
           <Layer
             id="sky-plane"
             type="fill-extrusion"

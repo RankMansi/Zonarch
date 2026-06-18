@@ -3,9 +3,9 @@ export type SiteViewerLayerId =
   | 'buildable_footprint'
   | 'envelope_uap'
   | 'envelope_base'
-  | 'existing_building'
-  | 'sky_exposure_plane'
-  | 'subject_building';
+  | 'sky_exposure_plane';
+
+export type TaxLotSource = 'zoning_api' | 'mappluto_arcgis' | 'stored_pluto' | 'rectangle_fallback';
 
 export interface SiteViewerFeatureProperties {
   layer: SiteViewerLayerId;
@@ -45,9 +45,9 @@ export interface SiteViewerPayload {
   };
   layers: SiteViewerGeoJSON;
   meta: {
-    existing_building_count: number;
     envelope_method: 'polygon' | 'rectangle_fallback';
+    lot_polygon_source?: TaxLotSource;
     data_warnings: string[];
-    use_osm_buildings_fallback?: boolean;
+    map_engine: 'openfreemap_maplibre';
   };
 }
