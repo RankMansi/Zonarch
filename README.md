@@ -25,7 +25,6 @@ Zone-Draft closes the gap between ambitious NYC development sites and slow, frag
 - [Data Sources](#data-sources)
 - [Export Package](#export-package)
 - [UI & Design](#ui--design)
-- [Limitations](#limitations)
 
 ---
 
@@ -341,18 +340,6 @@ The interface is inspired by [Studio Hazey](https://www.studiohazey.com/) with a
 - **Accent:** `#C8956C`
 
 The landing page introduces the product narrative; the underwriting terminal (`/underwrite`) is a bento-grid tri-panel workbench optimized for live analysis.
-
----
-
-## Limitations
-
-Zone-Draft is a hackathon-grade underwriting assistant, not a replacement for licensed professionals:
-
-- Zoning analysis uses simplified FAR tables when the geo-agent is offline; always verify against the full Zoning Resolution.
-- Financial modeling uses directional assumptions (e.g. $375/sf hard costs, 18% developer profit, 10× assessed land multiplier).
-- Comparable sales may be sparse in some neighborhoods; the system falls back to default PSF with a warning.
-- Envelope geometry is approximate and does not account for every special district, landmark, or contextual overlay.
-- IRR and cap rate figures are modeled assumptions, not market quotes.
 
 ---
 
