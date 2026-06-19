@@ -1,5 +1,6 @@
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
 import type { SiteViewerGeoJSON, SiteViewerLayerId } from '@/types/zone-draft';
+import { readResponseJson } from './http-json';
 import { approximateLotPolygon } from './lot-geometry';
 
 const GEO_AGENT_URL = process.env.GEO_AGENT_URL || 'http://localhost:8000';
@@ -105,7 +106,7 @@ export async function fetchGeoAgentGeometry(
       signal: AbortSignal.timeout(12_000),
     });
     if (!res.ok) return null;
-    const data = await res.json();
+    const data = await readResponseJson<{ error?: string } & Record<string, unknown>>(res);
     if (data.error) return null;
     return data;
   } catch {

@@ -1,4 +1,5 @@
 import { bandClient, bandRoom } from './band-client';
+import { readResponseJson } from './http-json';
 import { resolveSitePreview } from './resolve-site';
 import { calcCompStats, fetchNeighborhoodComps } from './tools/sales-api';
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
@@ -157,7 +158,11 @@ async function runZoningAgent(roomId: string): Promise<string> {
         signal: AbortSignal.timeout(30_000),
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await readResponseJson<{
+          error?: string;
+          zoning_analysis?: NonNullable<ZoneDraftRoomSchema['zoning_analysis']>;
+          log?: string;
+        }>(res);
         if (!data.error && data.zoning_analysis) {
           await bandRoom.context.set(roomId, 'zoning_analysis', data.zoning_analysis);
           return data.log || 'Zoning analysis complete via Python agent';
@@ -211,7 +216,11 @@ async function runSpatialAgent(roomId: string): Promise<string> {
         signal: AbortSignal.timeout(30_000),
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await readResponseJson<{
+          error?: string;
+          building_envelope?: NonNullable<ZoneDraftRoomSchema['building_envelope']>;
+          log?: string;
+        }>(res);
         if (!data.error && data.building_envelope) {
           await bandRoom.context.set(roomId, 'building_envelope', data.building_envelope);
           return data.log || 'Envelope computed via Python agent';

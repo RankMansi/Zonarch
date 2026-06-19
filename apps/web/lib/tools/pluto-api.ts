@@ -1,5 +1,6 @@
 import type { PLUTORecord } from '@/types/zone-draft';
 import type { GeoSearchResult } from '@/types/zone-draft';
+import { fetchJson } from '../http-json';
 import { normalizeBoroughCode } from './geocoder';
 import { approximateLotPolygon, polygonFromPlutoGeom } from '../lot-geometry';
 
@@ -37,11 +38,17 @@ export function normalizeBBL(bbl: string): string {
 
 async function fetchPluto(query: string): Promise<PLUTORecord[]> {
   const url = `${PLUTO_SODA_BASE}?${query}&$limit=1`;
-  const response = await fetch(url, { headers: plutoHeaders(), cache: 'no-store' });
+  const { response, data } = await fetchJson<PLUTORecord[] | { error?: boolean; message?: string }>(
+    url,
+    { headers: plutoHeaders(), cache: 'no-store', signal: AbortSignal.timeout(15_000) }
+  );
   if (!response.ok) {
-    throw new Error(`PLUTO API returned ${response.status}`);
+    const msg =
+      data && typeof data === 'object' && !Array.isArray(data) && 'message' in data
+        ? String(data.message)
+        : `HTTP ${response.status}`;
+    throw new Error(`PLUTO API error: ${msg}`);
   }
-  const data = await response.json();
   if (!Array.isArray(data)) return [];
   return data;
 }

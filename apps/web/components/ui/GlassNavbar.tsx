@@ -16,8 +16,8 @@ export default function GlassNavbar() {
 
   return (
     <>
-      <header className="fixed top-5 md:top-7 left-0 right-0 z-50 flex justify-center px-4 md:px-8 pointer-events-none">
-        <nav className="glass-nav pointer-events-auto w-full max-w-5xl flex items-center justify-between gap-4 px-4 md:px-6 py-3 md:py-3.5">
+      <header className="fixed top-4 md:top-5 left-0 right-0 z-50 flex justify-center px-4 md:px-1 pointer-events-none">
+        <nav className="glass-nav pointer-events-auto w-full max-w-5xl flex items-center justify-between gap-3 px-4 md:px-5 py-2 md:py-2">
           <Link href="/" className="type-label text-[#f5ebe0] shrink-0 hover:text-[#c8956c] transition-colors">
             Zone·Draft
           </Link>
@@ -27,7 +27,7 @@ export default function GlassNavbar() {
               <a
                 key={link.href}
                 href={link.href}
-                className="glass-nav-link type-label text-[#ede4d9]/90 px-4 py-2 rounded-full hover:text-[#f5ebe0] transition-colors flex items-center gap-1.5"
+                className="glass-nav-link type-label text-[#ede4d9]/90 px-4 py-1.5 rounded-full hover:text-[#f5ebe0] transition-colors flex items-center gap-1.5"
               >
                 {link.label}
                 <span className="text-[#c8956c]/70 text-[10px]">→</span>
@@ -38,14 +38,14 @@ export default function GlassNavbar() {
           <div className="flex items-center gap-2 shrink-0">
             <Link
               href="/underwrite"
-              className="hidden sm:inline-flex type-label text-[#f5ebe0] bg-[#6b4423]/50 border border-[#ede4d9]/20 px-4 py-2 rounded-full hover:bg-[#6b4423]/80 transition-all duration-300"
+              className="hidden sm:inline-flex type-label text-[#f5ebe0] bg-[#6b4423]/50 border border-[#ede4d9]/20 px-4 py-1.5 rounded-full hover:bg-[#6b4423]/80 transition-all duration-300"
             >
               Launch →
             </Link>
             <button
               type="button"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden type-label text-[#ede4d9] px-3 py-2 rounded-full hover:bg-[#6b4423]/30 transition-colors"
+              className="lg:hidden type-label text-[#ede4d9] px-3 py-1.5 rounded-full hover:bg-[#6b4423]/30 transition-colors"
               aria-expanded={menuOpen}
               aria-label="Toggle menu"
             >
@@ -62,7 +62,7 @@ export default function GlassNavbar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25 }}
-            className="fixed top-[4.5rem] left-4 right-4 z-40 lg:hidden pointer-events-none flex justify-center"
+            className="fixed top-[3.5rem] left-4 right-4 z-40 lg:hidden pointer-events-none flex justify-center"
           >
             <div className="glass-nav glass-nav-menu pointer-events-auto w-full max-w-sm p-4 flex flex-col gap-1">
               {navLinks.map((link) => (

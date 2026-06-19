@@ -1,5 +1,6 @@
 import type { GeoSearchResult } from '@/types/zone-draft';
 import { parseSiteInput, normalizeBBLInput } from '../parse-site-input';
+import { fetchJson } from '../http-json';
 import { queryPLUTOByBBL } from './pluto-api';
 
 const GEOSEARCH_BASE = 'https://geosearch.planninglabs.nyc/v2/search';
@@ -45,26 +46,41 @@ export async function geocodeNYCAddress(rawInput: string): Promise<GeoSearchResu
   }
 
   const url = `${GEOSEARCH_BASE}?text=${encodeURIComponent(parsed.raw)}&size=1`;
-  const response = await fetch(url);
-  const data = await response.json();
+  const { response, data } = await fetchJson<{
+    features?: Array<{
+      properties: Record<string, unknown>;
+      geometry: { coordinates: [number, number] };
+    }>;
+  }>(url, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!response.ok) {
+    throw new Error(`Geocoder unavailable (HTTP ${response.status})`);
+  }
   if (!data.features?.length) {
     throw new Error(`Geocoder: Cannot resolve "${rawInput}"`);
   }
 
   const feature = data.features[0];
-  const props = feature.properties;
-  const bbl =
-    props.pad_bbl ||
-    props.addendum?.pad?.bbl ||
-    props.bbl;
+  const props = feature.properties as Record<string, unknown> & {
+    label?: string;
+    borough?: string;
+    name?: string;
+    confidence?: number;
+    pad_bbl?: string;
+    bbl?: string;
+    addendum?: { pad?: { bbl?: string } };
+  };
+  const bbl = props.pad_bbl || props.addendum?.pad?.bbl || props.bbl;
 
   if (!bbl) {
     throw new Error(`Geocoder: No BBL found for "${rawInput}"`);
   }
 
   return {
-    label: props.label,
-    borough: props.borough,
+    label: props.label ?? String(rawInput),
+    borough: props.borough ?? 'Queens',
     bbl: String(bbl).replace(/\D/g, '').padStart(10, '0').slice(0, 10),
     streetAddress: props.name || props.label?.split(',')[0]?.trim(),
     latitude: feature.geometry.coordinates[1],

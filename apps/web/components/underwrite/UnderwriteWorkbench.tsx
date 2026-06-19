@@ -12,6 +12,7 @@ import StickyDecisionBar from '@/components/ui/StickyDecisionBar';
 import type { SessionStatus } from '@/types/zone-draft';
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
 import type { SitePreview } from '@/lib/resolve-site';
+import { fetchApiJson } from '@/lib/http-json';
 
 type LotData = NonNullable<ZoneDraftRoomSchema['lot_data']>;
 type EnvelopeData = NonNullable<ZoneDraftRoomSchema['building_envelope']>;
@@ -114,12 +115,14 @@ export default function UnderwriteWorkbench() {
     setPreview(null);
     setPendingInput(rawInput);
     try {
-      const res = await fetch('/api/preview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rawInput }),
-      });
-      const data = await res.json();
+      const { response: res, data } = await fetchApiJson<SitePreview & { error?: string }>(
+        '/api/preview',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rawInput }),
+        }
+      );
       if (!res.ok) throw new Error(data.error || 'Lookup failed');
       setPreview(data);
       setLotData(data.lotData);
@@ -138,12 +141,14 @@ export default function UnderwriteWorkbench() {
     setEnvelopeData(null);
     setFinancialData(null);
     setZoningData(null);
-    const res = await fetch('/api/underwrite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rawInput: pendingInput }),
-    });
-    const data = await res.json();
+    const { response: res, data } = await fetchApiJson<{ sessionId?: string; error?: string }>(
+      '/api/underwrite',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawInput: pendingInput }),
+      }
+    );
     if (data.sessionId) {
       setSessionId(data.sessionId);
       restoredRef.current = data.sessionId;
