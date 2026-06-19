@@ -90,6 +90,14 @@ export interface ZoneDraftRoomSchema {
   /** Georeferenced Site Viewer layers (optional cache after spatial agent) */
   site_geometry_geojson?: SiteViewerGeoJSON | null;
 
+  /** Last executive brief sent via Resend (user-triggered after APPROVED) */
+  outbound_email: {
+    resend_id: string;
+    recipients: string[];
+    sent_at: string;
+    subject: string;
+  } | null;
+
   status: 'PENDING' | 'RUNNING' | 'APPROVED' | 'FAILED';
   iteration_count: number;
   error_log: string[];

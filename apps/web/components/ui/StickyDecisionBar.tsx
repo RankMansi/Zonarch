@@ -2,6 +2,7 @@
 
 import type { SessionStatus } from '@/types/zone-draft';
 import type { ZoneDraftRoomSchema } from '@/types/zone-draft';
+import EmailBriefButton from '@/components/ui/EmailBriefButton';
 
 type FinancialData = NonNullable<ZoneDraftRoomSchema['financial_analysis']>;
 type LotData = NonNullable<ZoneDraftRoomSchema['lot_data']>;
@@ -29,7 +30,7 @@ export default function StickyDecisionBar({
 
   return (
     <div className="sticky-decision-bar">
-      <div className="sticky-decision-inner">
+      <div className="sticky-decision-inner flex-wrap gap-y-2">
         <span className="truncate max-w-[140px] sm:max-w-[200px] text-xs text-[#5c4033]">{address}</span>
         <span className="hidden sm:inline text-[#d4c4b0">|</span>
         <span className="text-xs font-bold text-[#2c1810]">{verdict}</span>
@@ -38,13 +39,16 @@ export default function StickyDecisionBar({
           Land value: <strong>{rlv}</strong>
         </span>
         {status === 'complete' && sessionId && onExport && (
-          <button
-            type="button"
-            onClick={onExport}
-            className="ml-auto text-[10px] px-3 py-1 rounded-full bg-[#6b4423] text-white shrink-0"
-          >
-            Export
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={onExport}
+              className="text-[10px] px-3 py-1 rounded-full bg-[#6b4423] text-white shrink-0"
+            >
+              Export
+            </button>
+            <EmailBriefButton sessionId={sessionId} />
+          </>
         )}
       </div>
     </div>

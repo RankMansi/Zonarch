@@ -33,6 +33,7 @@ function createInitialSchema(overrides?: Partial<ZoneDraftRoomSchema>): ZoneDraf
     zoning_analysis: null,
     building_envelope: null,
     financial_analysis: null,
+    outbound_email: null,
     status: 'PENDING',
     iteration_count: 0,
     error_log: [],
