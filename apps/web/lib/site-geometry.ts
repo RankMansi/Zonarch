@@ -106,8 +106,15 @@ export async function fetchGeoAgentGeometry(
       signal: AbortSignal.timeout(12_000),
     });
     if (!res.ok) return null;
-    const data = await readResponseJson<{ error?: string } & Record<string, unknown>>(res);
-    if (data.error) return null;
+    const data = await readResponseJson<
+      | { error: string }
+      | {
+          layers: SiteViewerGeoJSON;
+          metrics: Record<string, number>;
+          meta: { envelope_method: string; data_warnings: string[] };
+        }
+    >(res);
+    if ('error' in data) return null;
     return data;
   } catch {
     return null;

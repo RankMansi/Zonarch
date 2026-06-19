@@ -85,7 +85,7 @@ export async function geocodeNYCAddress(rawInput: string): Promise<GeoSearchResu
     streetAddress: props.name || props.label?.split(',')[0]?.trim(),
     latitude: feature.geometry.coordinates[1],
     longitude: feature.geometry.coordinates[0],
-    confidence: props.confidence,
+    confidence: props.confidence ?? 1,
   };
 }
 
