@@ -24,7 +24,6 @@ Zone-Draft closes the gap between ambitious NYC development sites and slow, frag
 - [Band Integration](#band-integration)
 - [Data Sources](#data-sources)
 - [Export Package](#export-package)
-- [UI & Design](#ui--design)
 
 ---
 
@@ -328,18 +327,6 @@ When underwriting completes, download a `.zip` containing:
 | `blueprint_report.md` | Full underwriting memo: zoning, envelope, financials, verdict |
 | `financial_underwriting.csv` | Line-item pro forma (comps, costs, RLV, verdict) |
 | `site_geometry.json` | 3D envelope vertices, setback planes, and/or georeferenced GeoJSON |
-
----
-
-## UI & Design
-
-The interface is inspired by [Studio Hazey](https://www.studiohazey.com/) with a warm brown palette:
-
-- **Dark:** `#1a120b` / `#2C1810`
-- **Cream:** `#EDE4D9`
-- **Accent:** `#C8956C`
-
-The landing page introduces the product narrative; the underwriting terminal (`/underwrite`) is a bento-grid tri-panel workbench optimized for live analysis.
 
 ---
 
